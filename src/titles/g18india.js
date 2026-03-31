@@ -1,0 +1,60 @@
+import { defaults } from './defaults.js'
+
+export const g18india = {
+  ...defaults,
+  titleId: 'g18india', title: '18India', subtitle: 'The Railways of the British Raj', designer: 'Michael Carter, Anthony Fryer, John Harres, Nick Neylon',
+  location: 'India', minPlayers: 2, maxPlayers: 5,
+  bankCash: 9000, startingCash: { 2: 1100, 3: 733, 4: 550, 5: 440 },
+  certLimit: { 2: 37, 3: 23, 4: 18, 5: 15 },
+  currencyFormat: '₹', capitalization: 'incremental', floatPercent: 30, sellBuyOrder: 'sell_buy',
+  market: [
+    ['0c','56','58','61','64p','67p','71p','76p','82p','90p','100p','112p','126','142','160','180','205','230','255','280','300','320','340','360','380','400e','420e','440e','460e'],
+  ],
+  phases: [
+    { name: 'I', trainLimit: 2, tiles: ['yellow','green','brown','gray'], operatingRounds: 2 },
+    { name: 'II', on: '3', trainLimit: 2, tiles: ['yellow','green','brown','gray'], operatingRounds: 2 },
+    { name: 'III', on: '4', trainLimit: 2, tiles: ['yellow','green','brown','gray'], operatingRounds: 2 },
+    { name: "III'", on: '4-2', trainLimit: 2, tiles: ['yellow','green','brown','gray'], operatingRounds: 2 },
+    { name: 'IV', on: '3x2', trainLimit: 2, tiles: ['yellow','green','brown','gray'], operatingRounds: 2 },
+  ],
+  trains: [
+    { name: '2', distance: 2, price: 180, num: 6 },
+    { name: '3', distance: 3, price: 300, num: 4 },
+    { name: '4', distance: 4, price: 450, num: 3, variants: [{ name: '4E', price: 450 }] },
+    { name: '3x2', distance: 3, price: 700, num: 3, availableOn: "III'" },
+    { name: '3x3', distance: 3, price: 900, num: 3, availableOn: "III'" },
+    { name: '4x2', distance: 4, price: 800, num: 3, availableOn: "III'", variants: [{ name: '4Ex2', price: 800 }] },
+    { name: '4x3', distance: 4, price: 1100, num: 3, availableOn: "III'", variants: [{ name: '4Ex3', price: 1100 }] },
+  ],
+  corporations: [
+    { sym: 'GIPR', name: 'Great Indian Peninsula Railway', tokens: [0,40,100,100], color: '#fff', textColor: '#000', floatPercent: 30 },
+    { sym: 'NWR', name: 'Northwestern Railway', tokens: [0,40,100,100], color: '#48bc39', coordinates: 'G8', floatPercent: 30 },
+    { sym: 'EIR', name: 'East India Railway', tokens: [0,40,100], color: '#f14324', coordinates: 'P17', floatPercent: 30 },
+    { sym: 'NCR', name: 'North Central Railway', tokens: [0,40,100,100], color: '#d8ba9e', textColor: '#000', coordinates: 'K14', floatPercent: 30 },
+    { sym: 'MR', name: 'Madras Railway', tokens: [0,40,100], color: '#fccd1c', textColor: '#000', coordinates: 'K30', floatPercent: 30 },
+    { sym: 'SIR', name: 'South Indian Railway', tokens: [0,40,100,100], color: '#702f2b', coordinates: 'G36', floatPercent: 30 },
+    { sym: 'BNR', name: 'Bengal Nagpur Railway', tokens: [0,40,100,100,100], color: '#c4711c', coordinates: 'I20', floatPercent: 30 },
+    { sym: 'CGR', name: 'Ceylon Government Railway', tokens: [0,40,100], color: '#967ac4', coordinates: 'K40', floatPercent: 30 },
+    { sym: 'PNS', name: 'Punjab Northern State Railway', tokens: [0,40,100], color: '#9fc322', coordinates: 'D3', floatPercent: 30 },
+    { sym: 'WIP', name: 'West of India Portuguese Railway', tokens: [0,40,100], color: '#f24780', coordinates: 'E24', floatPercent: 30 },
+    { sym: 'EBR', name: 'Eastern Bengal Railway', tokens: [0,40,100], color: '#72818e', coordinates: 'P17', floatPercent: 30 },
+    { sym: 'BR', name: 'Bombay Railway', tokens: [0,40,100], color: '#6046a6', coordinates: 'D23', floatPercent: 30 },
+    { sym: 'NSR', name: 'Nizam State Railway', tokens: [0,40,100], color: '#458dd3', coordinates: 'H25', floatPercent: 30 },
+    { sym: 'TR', name: 'Tirhoot Railway', tokens: [0,40], color: '#100e0d', coordinates: 'M10', floatPercent: 30 },
+    { sym: 'SPD', name: 'Sind Punjab & Delhi Railroad', tokens: [0,40], color: '#c3b07a', textColor: '#000', coordinates: 'G8', floatPercent: 30 },
+    { sym: 'DHR', name: 'Darjeeling-Himalayan Railway', tokens: [0,40], color: '#2c8e48', coordinates: 'Q10', floatPercent: 30 },
+    { sym: 'WR', name: 'Western Railway', tokens: [0,40], color: '#3766ba', coordinates: 'D17', floatPercent: 30 },
+    { sym: 'KGF', name: 'Kolar Gold Fields Railways', tokens: [0,40], color: '#da193a', coordinates: 'H31', floatPercent: 30 },
+  ],
+
+  pregame: [{ id: 'auction', label: 'Private Auction', type: 'english' }],
+
+  companies: [
+    { sym: 'P1', name: 'Swedish EIC', value: 25, revenue: 5, desc: 'No special abilities.' },
+    { sym: 'P2', name: 'Portuguese EIC', value: 35, revenue: 5, desc: 'One extra yellow tile placement. Closes when used.' },
+    { sym: 'P3', name: 'Dutch EIC', value: 60, revenue: 10, desc: 'One extra track upgrade. Closes when used.' },
+    { sym: 'P4', name: 'French EIC', value: 75, revenue: 15, desc: '₹40 discount on total terrain cost during an OR. Closes when used.' },
+    { sym: 'P5', name: 'Danish EIC', value: 115, revenue: 20, desc: 'One free station, even if full. Closes when used.' },
+    { sym: 'P6', name: 'British EIC', value: 150, revenue: 25, desc: 'Receives jewelry concession. Closes when used.' },
+  ],
+}

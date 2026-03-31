@@ -1,0 +1,64 @@
+{
+  "18DO TRG": {
+    "note": "From PDF rules, no digital source",
+    "corporations": {
+      "BME": "#d81e3e",
+      "CME": "#237333",
+      "RhE": "#025aaa",
+      "KWE": "#FFF500",
+      "DGEE": "#f48221",
+      "DHB": "#474548",
+      "HHW": "#95c054"
+    }
+  },
+  "18DO HSB": {
+    "note": "Same railways as TRG, brewery corps fully guessed",
+    "breweries": {
+      "DUB": "#c8a23c",
+      "DAB": "#8b4513",
+      "RIT": "#006400",
+      "KRO": "#8b0000",
+      "STI": "#4b0082",
+      "DHB-B": "#2f4f4f"
+    }
+  },
+  "PTG": {
+    "note": "Rules describe 8 companies by color name only, hex codes guessed",
+    "corporations": {
+      "RED": "#d81e3e",
+      "BLU": "#0189d1",
+      "GRN": "#237333",
+      "YEL": "#FFF500",
+      "PUR": "#800080",
+      "BLK": "#333333",
+      "WHT": "#cccccc",
+      "GRY": "#808080"
+    }
+  },
+  "22Mars": {
+    "note": "From PDF rules, some colors from 18xx.games source but unverified",
+    "corporations": {
+      "TRE": "#FB0007",
+      "SMC": "#0B5453",
+      "NWC": "#D0D0D0",
+      "PL": "#BF5206",
+      "MS": "#18C0FF",
+      "SRC": "#000000",
+      "IG": "#6B006D",
+      "REX": "#FFFF0B"
+    }
+  },
+  "1899 Daihan": {
+    "note": "From PDF rules, corp names/themes known but colors fully guessed",
+    "corporations": {
+      "KR": "#d81e3e",
+      "GI": "#025aaa",
+      "HN": "#237333",
+      "GW": "#474548",
+      "JR": "#FFF500",
+      "RR": "#800080",
+      "BH": "#f48221",
+      "YN": "#00a993"
+    }
+  }
+}

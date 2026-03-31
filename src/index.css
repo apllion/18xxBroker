@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* ── Theme: Broker (dark green & gold) ── */
+.theme-broker {
+  --color-broker-bg: #0f1f15;
+  --color-broker-surface: #1a2e21;
+  --color-broker-surface-hover: #243a2b;
+  --color-broker-border: #2d4a35;
+  --color-broker-text: #f0ead6;
+  --color-broker-text-muted: #a8a08c;
+  --color-broker-gold: #c8a23c;
+  --color-broker-gold-dim: #8b7328;
+  --color-broker-green: #2d5a3f;
+  --color-broker-green-light: #3a7a52;
+  --color-broker-accent: #d4a843;
+}
+
+/* ── Theme: Dark (classic dark mode) ── */
+.theme-dark {
+  --color-broker-bg: #111827;
+  --color-broker-surface: #1f2937;
+  --color-broker-surface-hover: #374151;
+  --color-broker-border: #4b5563;
+  --color-broker-text: #f3f4f6;
+  --color-broker-text-muted: #9ca3af;
+  --color-broker-gold: #fbbf24;
+  --color-broker-gold-dim: #92750e;
+  --color-broker-green: #1e40af;
+  --color-broker-green-light: #3b82f6;
+  --color-broker-accent: #60a5fa;
+}
+
+/* ── Theme: Light ── */
+.theme-light {
+  --color-broker-bg: #f5f5f0;
+  --color-broker-surface: #ffffff;
+  --color-broker-surface-hover: #e5e7eb;
+  --color-broker-border: #d1d5db;
+  --color-broker-text: #1f2937;
+  --color-broker-text-muted: #6b7280;
+  --color-broker-gold: #92400e;
+  --color-broker-gold-dim: #b45309;
+  --color-broker-green: #166534;
+  --color-broker-green-light: #16a34a;
+  --color-broker-accent: #15803d;
+}
+
+@theme {
+  --color-broker-bg: var(--color-broker-bg);
+  --color-broker-surface: var(--color-broker-surface);
+  --color-broker-surface-hover: var(--color-broker-surface-hover);
+  --color-broker-border: var(--color-broker-border);
+  --color-broker-text: var(--color-broker-text);
+  --color-broker-text-muted: var(--color-broker-text-muted);
+  --color-broker-gold: var(--color-broker-gold);
+  --color-broker-gold-dim: var(--color-broker-gold-dim);
+  --color-broker-green: var(--color-broker-green);
+  --color-broker-green-light: var(--color-broker-green-light);
+  --color-broker-accent: var(--color-broker-accent);
+}
