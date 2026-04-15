@@ -230,6 +230,17 @@ export function useSync(gameStore) {
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [connect])
 
+  // When game state appears/changes and we have peers, broadcast full state
+  // This handles: creator starts game while peers are waiting
+  const prevGameRef = useRef(null)
+  useEffect(() => {
+    if (game && !prevGameRef.current && sendStateRef.current && establishedRef.current) {
+      // Game just appeared — send to all peers
+      sendStateRef.current(getSharedState(game))
+    }
+    prevGameRef.current = game
+  }, [game])
+
   // Sync-aware dispatch: dispatches locally + broadcasts to peers
   const syncDispatch = useCallback((action) => {
     rawDispatch(action)
