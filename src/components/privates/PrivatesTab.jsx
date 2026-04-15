@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useGameStore } from '../../store/gameStore.js'
+import { useDispatch } from '../../hooks/useDispatch.js'
 import { formatCurrency } from '../../utils/currency.js'
 
 export default function PrivatesTab() {
   const game = useGameStore((s) => s.game)
-  const dispatch = useGameStore((s) => s.dispatch)
+  const dispatch = useDispatch()
 
   if (!game) return null
 

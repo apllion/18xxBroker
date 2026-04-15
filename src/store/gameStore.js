@@ -54,7 +54,7 @@ export const useGameStore = create(
       if (!game || game.actionLog.length === 0) return
 
       const title = getTitle(game.title.titleId)
-      const playerNames = game.players.map((p) => p.name)
+      const playerNames = game.originalPlayerNames || game.players.map((p) => p.name)
       const userVariant = game.title.activeVariant?.id || null
       const freshGame = createGame(title, playerNames, userVariant)
       freshGame.createdAt = game.createdAt
@@ -75,6 +75,45 @@ export const useGameStore = create(
 
     endGame: () => {
       set({ game: null, saveKey: null })
+    },
+
+    // Replay — rebuild game at a specific action index
+    fullLog: null, // stored when entering replay mode
+
+    enterReplay: () => {
+      const { game } = get()
+      if (!game) return
+      set({ fullLog: game.actionLog.map((e) => e.action) })
+    },
+
+    exitReplay: () => {
+      const { game, fullLog } = get()
+      if (!game || !fullLog) { set({ fullLog: null }); return }
+      // Rebuild to full state
+      const title = getTitle(game.title.titleId)
+      const playerNames = game.originalPlayerNames || game.players.map((p) => p.name)
+      const userVariant = game.title.activeVariant?.id || null
+      const freshGame = createGame(title, playerNames, userVariant)
+      freshGame.createdAt = game.createdAt
+      for (const action of fullLog) {
+        applyAction(freshGame, action)
+      }
+      set({ game: freshGame, fullLog: null })
+    },
+
+    replayTo: (index) => {
+      const { game, fullLog } = get()
+      if (!game || !fullLog) return
+      const title = getTitle(game.title.titleId)
+      const playerNames = game.originalPlayerNames || game.players.map((p) => p.name)
+      const userVariant = game.title.activeVariant?.id || null
+      const freshGame = createGame(title, playerNames, userVariant)
+      freshGame.createdAt = game.createdAt
+      const actions = fullLog.slice(0, index + 1)
+      for (const action of actions) {
+        applyAction(freshGame, action)
+      }
+      set({ game: freshGame })
     },
   }))
 )

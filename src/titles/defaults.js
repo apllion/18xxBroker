@@ -18,6 +18,10 @@ export const defaults = {
   ebuyMustIssueBefore: false,
   ebuyDepotCheapest: true,
 
+  // Player order between SRs
+  // 'after_last_to_act' (default) | 'first_to_pass' | 'most_cash' | 'least_cash'
+  nextSRPlayerOrder: 'after_last_to_act',
+
   // Game end
   gameEndCheck: {
     bankrupt: 'immediate',

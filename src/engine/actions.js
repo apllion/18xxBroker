@@ -13,8 +13,12 @@ import { advanceRound, setRound, setFixedIndex, roundLabel } from './roundTracke
 
 let actionSeq = 0
 
+// Actions that mutate state but shouldn't be logged (turn navigation)
+const SILENT_ACTIONS = new Set(['NEXT_TURN', 'PREV_TURN', 'SR_PASS', 'SR_ACTED', 'SET_TURN_QUEUE'])
+
 export function applyAction(state, action) {
-  const entry = {
+  const silent = SILENT_ACTIONS.has(action.type)
+  const entry = silent ? null : {
     id: actionSeq++,
     timestamp: Date.now(),
     action,
@@ -94,11 +98,89 @@ export function applyAction(state, action) {
     case 'PLACE_NO_DEMAND':
       handlePlaceNoDemand(state, action)
       break
+    case 'SET_PLAYER_ORDER':
+      if (action.order && Array.isArray(action.order)) {
+        const ordered = action.order
+          .map((id) => state.players.find((p) => p.id === id))
+          .filter(Boolean)
+        if (ordered.length === state.players.length) {
+          state.players = ordered
+          state.playerOrder = action.order
+        }
+      }
+      break
+    case 'SET_PRIORITY':
+      if (action.playerId) {
+        state.priorityDeal = action.playerId
+      }
+      break
+    case 'DISMISS_EVENT':
+      if (state.pendingEvents?.length > 0) {
+        state.pendingEvents = state.pendingEvents.filter((e) => e !== action.event)
+      }
+      break
+    case 'REMOVE_CORPORATION':
+      if (action.corpSym) {
+        state.corporations = state.corporations.filter((c) => c.sym !== action.corpSym)
+      }
+      break
+    case 'SET_CORP_ORDER':
+      if (action.order && Array.isArray(action.order)) {
+        state.corpOrder = action.order
+      }
+      break
+    case 'SET_TURN_QUEUE':
+      state.turnQueue = action.queue || []
+      state.turnIndex = 0
+      state.srPassed = []
+      break
+    case 'NEXT_TURN': {
+      if (state.turnQueue.length === 0) break
+      let next = (state.turnIndex + 1) % state.turnQueue.length
+      let attempts = 0
+      while (state.srPassed.includes(state.turnQueue[next]) && attempts < state.turnQueue.length) {
+        next = (next + 1) % state.turnQueue.length
+        attempts++
+      }
+      state.turnIndex = next
+      break
+    }
+    case 'PREV_TURN':
+      state.turnIndex = state.turnIndex > 0 ? state.turnIndex - 1 : state.turnQueue.length - 1
+      break
+    case 'SR_PASS': {
+      const passId = action.playerId
+      if (!state.srPassed.includes(passId)) {
+        state.srPassed = [...state.srPassed, passId]
+      }
+      let nextIdx = (state.turnIndex + 1) % state.turnQueue.length
+      let att = 0
+      while (state.srPassed.includes(state.turnQueue[nextIdx]) && att < state.turnQueue.length) {
+        nextIdx = (nextIdx + 1) % state.turnQueue.length
+        att++
+      }
+      state.turnIndex = nextIdx
+      break
+    }
+    case 'SR_ACTED':
+      state.srPassed = []
+      state.turnIndex = (state.turnIndex + 1) % (state.turnQueue.length || 1)
+      break
+    case 'REORDER_BY_CASH': {
+      const dir = action.direction || 'desc' // 'desc' = most cash first, 'asc' = least first
+      const sorted = [...state.players].sort((a, b) =>
+        dir === 'desc' ? b.cash - a.cash : a.cash - b.cash
+      )
+      state.players = sorted
+      state.playerOrder = sorted.map((p) => p.id)
+      state.priorityDeal = sorted[0].id
+      break
+    }
     default:
       break
   }
 
-  state.actionLog.push(entry)
+  if (entry) state.actionLog.push(entry)
   return entry
 }
 
@@ -243,10 +325,16 @@ function handleBuyTrain(state, { corpSym, trainName, price, fromCorpSym }) {
     rustTrains(state, trainName)
 
     // Handle events
+    const triggered = []
     for (const event of (train.events || [])) {
-      if (event === 'close_companies') {
+      if (event === 'close_companies' || event === 'nationalize_companies') {
         closeAllCompanies(state)
       }
+      triggered.push(event)
+    }
+    // Store triggered events for UI prompts
+    if (triggered.length > 0) {
+      state.pendingEvents = (state.pendingEvents || []).concat(triggered)
     }
 
     // Make trains available that were gated on this train name
@@ -405,6 +493,27 @@ function describeAction(state, action) {
       return `→ ${state.roundTracker ? roundLabel(state.roundTracker) : 'next round'}`
     case 'SET_ROUND':
       return `Round set manually`
+    case 'SET_PLAYER_ORDER': {
+      const names = (action.order || []).map((id) => playerName(id))
+      return `Player order set: ${names.join(', ')}`
+    }
+    case 'SET_PRIORITY':
+      return `Priority deal → ${playerName(action.playerId)}`
+    case 'DISMISS_EVENT':
+      return `Event acknowledged: ${action.event}`
+    case 'REMOVE_CORPORATION':
+      return `${action.corpSym} removed from game`
+    case 'SET_CORP_ORDER':
+      return `Corporation order set: ${(action.order || []).join(', ')}`
+    case 'SET_TURN_QUEUE':
+      return `Turn order set`
+    case 'NEXT_TURN':
+    case 'PREV_TURN':
+    case 'SR_PASS':
+    case 'SR_ACTED':
+      return null // silent — no log entry for turn navigation
+    case 'REORDER_BY_CASH':
+      return `Players reordered by ${action.direction === 'asc' ? 'least' : 'most'} cash`
     default:
       return JSON.stringify(action)
   }

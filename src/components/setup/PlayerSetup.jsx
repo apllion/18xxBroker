@@ -5,13 +5,47 @@ import { useGameStore } from '../../store/gameStore.js'
 import { formatCurrency } from '../../utils/currency.js'
 import { getSelectableVariants, getAutoVariants } from '../../engine/variants.js'
 
+const ADJECTIVES = [
+  'Smart', 'Nice', 'Bold', 'Calm', 'Keen', 'Swift',
+  'Brave', 'Chill', 'Witty', 'Sunny', 'Lucky', 'Noble',
+]
+const ANIMALS = [
+  'Lion', 'Seal', 'Fox', 'Bear', 'Hawk', 'Otter',
+  'Wolf', 'Panda', 'Lynx', 'Crane', 'Moose', 'Raven',
+]
+
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+
+function generateName(used) {
+  for (let i = 0; i < 20; i++) {
+    const name = `${pickRandom(ADJECTIVES)} ${pickRandom(ANIMALS)}`
+    if (!used.has(name)) return name
+  }
+  return `${pickRandom(ADJECTIVES)} ${pickRandom(ANIMALS)}`
+}
+
+function pickRandomNames(count) {
+  const used = new Set()
+  return Array.from({ length: count }, () => {
+    const name = generateName(used)
+    used.add(name)
+    return name
+  })
+}
+
 export default function PlayerSetup() {
   const { titleId } = useParams()
   const navigate = useNavigate()
   const startGame = useGameStore((s) => s.startGame)
 
+  console.log('[PlayerSetup] titleId from params:', titleId)
+
   const title = getTitle(titleId)
-  const [playerNames, setPlayerNames] = useState(['', ''])
+  console.log('[PlayerSetup] title resolved:', title?.title)
+
+  const [playerNames, setPlayerNames] = useState(() => pickRandomNames(2))
   const [selectedVariant, setSelectedVariant] = useState(null)
 
   const playerCount = playerNames.filter((n) => n.trim()).length
@@ -32,7 +66,8 @@ export default function PlayerSetup() {
 
   function addPlayer() {
     if (playerNames.length < title.maxPlayers) {
-      setPlayerNames([...playerNames, ''])
+      const used = new Set(playerNames.map((n) => n.trim()))
+      setPlayerNames([...playerNames, generateName(used)])
     }
   }
 
@@ -50,6 +85,7 @@ export default function PlayerSetup() {
 
   function handleStart() {
     const names = playerNames.filter((n) => n.trim()).map((n) => n.trim())
+    console.log('[PlayerSetup] handleStart — names:', names, 'titleId:', titleId, 'variant:', selectedVariant)
     if (names.length < title.minPlayers) return
     startGame(titleId, names, selectedVariant)
     navigate('/')

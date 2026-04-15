@@ -65,6 +65,7 @@ export function advanceRound(tracker, phaseManager) {
       tracker.type = 'stock'
       tracker.srNumber = 1
       tracker.suggestion = null
+      tracker.roundGuidance = 'Stock Round — players buy/sell shares in turn order'
     }
     return roundLabel(tracker)
   }
@@ -132,6 +133,15 @@ function updateSuggestion(tracker) {
     }
   } else {
     tracker.suggestion = null
+  }
+
+  // Round guidance — brief contextual text for current round type
+  if (tracker.type === 'stock') {
+    tracker.roundGuidance = 'Stock Round — players buy/sell shares in turn order'
+  } else if (tracker.type === 'operating') {
+    tracker.roundGuidance = 'Operating Round — corporations run in price order'
+  } else {
+    tracker.roundGuidance = null
   }
 
   return roundLabel(tracker)

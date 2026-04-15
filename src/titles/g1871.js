@@ -5,7 +5,7 @@ export const g1871 = {
   titleId: 'g1871', title: '1871', subtitle: 'The Old Prince', designer: 'Lucas Boyd',
   location: 'Prince Edward Island', minPlayers: 3, maxPlayers: 4,
   bankCash: 99999, startingCash: { 3: 580, 4: 480 }, certLimit: { 3: 20, 4: 16 },
-  currencyFormat: '$', capitalization: 'full', floatPercent: 60, sellBuyOrder: 'sell_buy',
+  currencyFormat: '$', capitalization: 'full', floatPercent: 60, sellBuyOrder: 'sell_buy', nextSRPlayerOrder: 'first_to_pass',
   market: [
     ['','','111','122','136','152','170','190','215','240','270','300','330','360','400B'],
     ['88','92','100','110','121','133','146','160','180','200','225','250','280'],

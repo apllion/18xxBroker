@@ -1,5 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useGameStore } from '../../store/gameStore.js'
+import { useUIStore } from '../../store/uiStore.js'
+import { useDispatch } from '../../hooks/useDispatch.js'
 import { formatCurrency } from '../../utils/currency.js'
 import { corpPrice } from '../../engine/stockMarket.js'
 import { currentPhase, trainLimit, operatingRounds } from '../../engine/phase.js'
@@ -8,8 +10,11 @@ import { calculateDividend } from '../../engine/rules/dividend.js'
 
 export default function CorpsTab() {
   const game = useGameStore((s) => s.game)
-  const dispatch = useGameStore((s) => s.dispatch)
+  const dispatch = useDispatch()
   const [corpIndex, setCorpIndex] = useState(0)
+  const turnTracking = useUIStore((s) => s.turnTracking)
+  const turnQueue = game?.turnQueue || []
+  const turnIndex = game?.turnIndex || 0
 
   if (!game) return null
 
@@ -24,6 +29,19 @@ export default function CorpsTab() {
       .map((c) => ({ ...c, price: corpPrice(game.stockMarket, c.sym) || 0 }))
       .sort((a, b) => b.price - a.price)
   }, [game.corporations, game.stockMarket])
+
+  // Auto-sync with turn tracking in OR
+  const isOR = game.roundTracker?.type === 'operating' && !game.roundTracker?.inPregame
+  const currentTurnCorp = isOR && turnTracking === 'on' && turnQueue.length > 0
+    ? turnQueue[turnIndex]
+    : null
+
+  useEffect(() => {
+    if (currentTurnCorp) {
+      const idx = operatingOrder.findIndex((c) => c.sym === currentTurnCorp)
+      if (idx >= 0 && idx !== corpIndex) setCorpIndex(idx)
+    }
+  }, [currentTurnCorp, operatingOrder])
 
   if (operatingOrder.length === 0) {
     return (
@@ -108,8 +126,18 @@ export default function CorpsTab() {
   )
 }
 
+const OR_STEPS = [
+  { id: 'track', label: 'Lay Track' },
+  { id: 'token', label: 'Place Token' },
+  { id: 'routes', label: 'Run Routes' },
+  { id: 'dividend', label: 'Dividends' },
+  { id: 'train', label: 'Buy Trains' },
+]
+
 function CorpDetail({ game, corp, dispatch, fmt, onNext }) {
   const [revenue, setRevenue] = useState('')
+  const [orStep, setOrStep] = useState(0)
+  const turnTracking = useUIStore((s) => s.turnTracking)
 
   const price = corpPrice(game.stockMarket, corp.sym)
   const limit = trainLimit(game.phaseManager)
@@ -177,6 +205,33 @@ function CorpDetail({ game, corp, dispatch, fmt, onNext }) {
           <div>Tokens: {corp.tokensPlaced}/{corp.tokens.length}</div>
         </div>
       </div>
+
+      {/* OR step tracker (guided mode) */}
+      {turnTracking === 'on' && (
+        <div className="flex gap-1 overflow-x-auto pb-1">
+          {OR_STEPS.map((step, i) => (
+            <button
+              key={step.id}
+              onClick={() => setOrStep(i)}
+              className={`flex-shrink-0 text-xs px-2.5 py-1 rounded-full transition-colors ${
+                i === orStep
+                  ? 'bg-amber-700 text-white font-medium'
+                  : i < orStep
+                    ? 'bg-broker-surface/50 text-broker-text-muted opacity-50'
+                    : 'bg-broker-surface text-broker-text-muted'
+              }`}
+            >
+              {step.label}
+            </button>
+          ))}
+          <button
+            onClick={() => { setOrStep(0); onNext() }}
+            className="flex-shrink-0 text-xs px-2.5 py-1 rounded-full bg-broker-green/50 text-broker-gold font-medium"
+          >
+            Done →
+          </button>
+        </div>
+      )}
 
       {/* Trains */}
       <div className="bg-broker-surface rounded-lg p-3">

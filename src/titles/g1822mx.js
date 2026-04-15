@@ -19,6 +19,7 @@ export const g1822mx = {
   capitalization: 'incremental',
   floatPercent: 20,
   mustSellInBlocks: true,
+  nextSRPlayerOrder: 'most_cash',
 
   // Single-row market
   market: [

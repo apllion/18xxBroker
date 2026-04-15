@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { allTitles } from '../../titles/index.js'
 import { useGameStore } from '../../store/gameStore.js'
-import { loadAllGames, deleteGame } from '../../utils/persistence.js'
+import { useSyncContext } from '../../hooks/SyncContext.jsx'
+import { loadAllGames, deleteGame, importGame } from '../../utils/persistence.js'
 import { useThemeStore, themes } from '../../store/themeStore.js'
 
 export default function GameSelector() {
   const navigate = useNavigate()
   const loadGame = useGameStore((s) => s.loadGame)
+  const sync = useSyncContext()
   const titles = allTitles()
   const [savedGames, setSavedGames] = useState(() => loadAllGames())
 
@@ -23,6 +25,24 @@ export default function GameSelector() {
   function handleDelete(key) {
     deleteGame(key)
     setSavedGames(loadAllGames())
+  }
+
+  const fileRef = useRef(null)
+  function handleImport(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const data = importGame(reader.result)
+        loadGame(data)
+        navigate('/')
+      } catch (err) {
+        console.error('Failed to import game:', err)
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
   }
 
   const themeId = useThemeStore((s) => s.themeId)
@@ -48,14 +68,18 @@ export default function GameSelector() {
         ))}
       </div>
 
-      <img src="/logo.png" alt="18xxBroker" className="w-48 mb-4 mt-2" />
+      <img src={import.meta.env.BASE_URL + 'logo.png'} alt="18xxBroker" className="w-48 mb-4 mt-2" />
+
+      {/* Room join — join a peer's game */}
+      <RoomJoin sync={sync} />
+
       <p className="text-broker-text-muted mb-8">Choose a game</p>
 
       <div className="grid grid-cols-2 gap-3 w-full max-w-md">
         {titles.map((t) => (
           <button
             key={t.titleId}
-            onClick={() => navigate(`/setup/${t.titleId}`)}
+            onClick={() => { console.log('[GameSelector] selected:', t.titleId, t.title); navigate(`/setup/${t.titleId}`) }}
             className="bg-broker-surface hover:bg-broker-surface-hover border border-broker-border rounded-lg p-4 text-left transition-colors relative overflow-hidden"
           >
             {t.wip && (
@@ -72,8 +96,19 @@ export default function GameSelector() {
         ))}
       </div>
 
+      {/* Load from file */}
+      <div className="w-full max-w-md mt-6">
+        <button
+          onClick={() => fileRef.current?.click()}
+          className="w-full bg-broker-surface hover:bg-broker-surface-hover border border-dashed border-broker-border rounded-lg py-3 text-sm text-broker-text-muted hover:text-white transition-colors"
+        >
+          Load Game from File
+        </button>
+        <input ref={fileRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
+      </div>
+
       {savedList.length > 0 && (
-        <div className="w-full max-w-md mt-8">
+        <div className="w-full max-w-md mt-6">
           <h2 className="text-lg font-medium mb-3 text-broker-text">Saved Games</h2>
           <div className="space-y-2">
             {savedList.map(({ key, game }) => {
@@ -111,6 +146,71 @@ export default function GameSelector() {
             })}
           </div>
         </div>
+      )}
+    </div>
+  )
+}
+
+function RoomJoin({ sync }) {
+  const [code, setCode] = useState('')
+  const [showJoin, setShowJoin] = useState(false)
+
+  if (!sync) return null
+
+  if (sync.roomId) {
+    return (
+      <div className="w-full max-w-md mb-4 bg-broker-surface rounded-lg px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${
+            sync.status === 'connected' ? 'bg-green-400' : 'bg-amber-400 animate-pulse'
+          }`} />
+          <span className="text-sm text-broker-text-muted">Room</span>
+          <span className="font-mono font-bold text-white tracking-wider">{sync.roomId}</span>
+          <span className="text-xs text-broker-text-muted">
+            {sync.peerCount > 0 ? `${sync.peerCount + 1} devices` : 'waiting...'}
+          </span>
+        </div>
+        <button onClick={sync.leaveRoom} className="text-xs text-broker-text-muted hover:text-red-300">
+          Leave
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-full max-w-md mb-4 flex gap-2 justify-center">
+      {showJoin ? (
+        <>
+          <input
+            type="text"
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            placeholder="Room code"
+            maxLength={6}
+            className="w-28 bg-broker-surface border border-broker-border rounded px-3 py-2 text-sm text-white font-mono tracking-wider placeholder-broker-text-muted text-center"
+            autoFocus
+          />
+          <button
+            onClick={() => { if (code.trim().length >= 4) { sync.joinRoom(code); setShowJoin(false) } }}
+            disabled={code.trim().length < 4}
+            className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm disabled:opacity-40"
+          >
+            Join
+          </button>
+          <button
+            onClick={() => setShowJoin(false)}
+            className="text-broker-text-muted hover:text-white px-2 text-sm"
+          >
+            Cancel
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={() => setShowJoin(true)}
+          className="bg-broker-surface hover:bg-broker-surface-hover border border-broker-border rounded px-4 py-2 text-sm text-broker-text-muted hover:text-white"
+        >
+          Join Room
+        </button>
       )}
     </div>
   )

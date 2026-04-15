@@ -24,8 +24,6 @@ export function createGame(baseTitle, playerNames, userVariant = null) {
     : title.bankCash[playerCount]
 
   const startingCash = title.startingCash[playerCount]
-  const certLimit = resolveCertLimit(title.certLimit, playerCount)
-
   const players = playerNames.map((name, i) =>
     createPlayer(`p${i}`, name, startingCash)
   )
@@ -36,6 +34,8 @@ export function createGame(baseTitle, playerNames, userVariant = null) {
 
   const corporations = corpDefs.map((def) => createCorporation(def, title))
   const companies = companyDefs.map((def) => createPrivateCompany(def))
+
+  const certLimit = resolveCertLimit(title.certLimit, playerCount, corporations.length)
 
   const bank = createBank(bankCash - (startingCash * playerCount))
   const stockMarket = createStockMarket(title.market)
@@ -55,6 +55,8 @@ export function createGame(baseTitle, playerNames, userVariant = null) {
     certLimit,
     bank,
     players,
+    playerOrder: players.map((p) => p.id),  // mutable turn order
+    priorityDeal: players[0].id,            // who starts each SR
     corporations,
     companies,
     stockMarket,
@@ -63,13 +65,21 @@ export function createGame(baseTitle, playerNames, userVariant = null) {
     beerMarket: createBeerMarket(title, playerCount),
     roundTracker,
     setupHints,
+    originalPlayerNames: playerNames,  // immutable — for replay/save
+    turnQueue: [],
+    turnIndex: 0,
+    srPassed: [],
+    pendingEvents: [],
     actionLog: [],
     createdAt: Date.now(),
   }
 }
 
-function resolveCertLimit(certLimitDef, playerCount) {
+function resolveCertLimit(certLimitDef, playerCount, corpCount) {
+  if (typeof certLimitDef === 'number') return certLimitDef
   const val = certLimitDef[playerCount]
   if (typeof val === 'number') return val
+  // Nested: { corpCount: limit }
+  if (typeof val === 'object') return val[corpCount] ?? Object.values(val)[0]
   return val
 }

@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useGameStore } from '../../store/gameStore.js'
 import { useUIStore } from '../../store/uiStore.js'
+import { useDispatch } from '../../hooks/useDispatch.js'
 import { parPrices, corpPrice } from '../../engine/stockMarket.js'
 import { formatCurrency } from '../../utils/currency.js'
 
 export default function ActionPanel() {
   const game = useGameStore((s) => s.game)
-  const dispatch = useGameStore((s) => s.dispatch)
+  const dispatch = useDispatch()
   const activePlayerId = useUIStore((s) => s.activePlayerId)
 
   if (!game || !activePlayerId) {

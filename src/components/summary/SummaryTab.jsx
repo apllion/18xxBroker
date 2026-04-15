@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { useGameStore } from '../../store/gameStore.js'
 import { useUIStore } from '../../store/uiStore.js'
 import { formatCurrency } from '../../utils/currency.js'
@@ -5,6 +6,7 @@ import { allNetWorths } from '../../engine/rules/netWorth.js'
 import { gameEndWarnings } from '../../engine/rules/gameEnd.js'
 import { certLimitWarnings } from '../../engine/rules/certLimit.js'
 import { currentPhase } from '../../engine/phase.js'
+import { exportGame, importGame } from '../../utils/persistence.js'
 
 export default function SummaryTab() {
   const game = useGameStore((s) => s.game)
@@ -78,12 +80,8 @@ export default function SummaryTab() {
         <div className="text-xs text-broker-text-muted mt-1">{bankPct}% remaining</div>
       </div>
 
-      {/* Game Info */}
-      <div className="bg-broker-surface rounded-lg p-3 text-sm text-broker-text">
-        <div>Phase: <span className="font-medium text-white">{phase.name}</span></div>
-        <div>Operating Rounds: {phase.operatingRounds}</div>
-        <div>Train Limit: {typeof phase.trainLimit === 'number' ? phase.trainLimit : JSON.stringify(phase.trainLimit)}</div>
-      </div>
+      {/* Game Info + Download/Upload */}
+      <GameInfo game={game} phase={phase} />
 
       {/* Corps summary */}
       <div className="bg-broker-surface rounded-lg p-3">
@@ -110,24 +108,160 @@ export default function SummaryTab() {
         </div>
       </div>
 
-      {/* Action Log */}
-      <div className="bg-broker-surface rounded-lg p-3">
+      {/* Action Log + Replay */}
+      <ActionLog game={game} showLog={showLog} toggleLog={toggleLog} />
+    </div>
+  )
+}
+
+function GameInfo({ game, phase }) {
+  const loadGame = useGameStore((s) => s.loadGame)
+  const fileRef = useRef(null)
+
+  function handleDownload() {
+    const json = exportGame(game)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${game.title.titleId}_${new Date(game.createdAt).toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function handleUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const data = importGame(reader.result)
+        loadGame(data)
+      } catch (err) {
+        console.error('Failed to import game:', err)
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
+  return (
+    <div className="bg-broker-surface rounded-lg p-3 text-sm text-broker-text">
+      <div>Phase: <span className="font-medium text-white">{phase.name}</span></div>
+      <div>Operating Rounds: {phase.operatingRounds}</div>
+      <div>Train Limit: {typeof phase.trainLimit === 'number' ? phase.trainLimit : JSON.stringify(phase.trainLimit)}</div>
+      <div className="flex gap-2 mt-3">
+        <button
+          onClick={handleDownload}
+          className="text-xs bg-blue-900/60 hover:bg-blue-800 text-blue-200 px-3 py-1.5 rounded"
+        >
+          Download Game
+        </button>
+        <button
+          onClick={() => fileRef.current?.click()}
+          className="text-xs bg-broker-surface-hover hover:bg-broker-surface text-broker-text-muted hover:text-white px-3 py-1.5 rounded"
+        >
+          Load File
+        </button>
+        <input ref={fileRef} type="file" accept=".json" onChange={handleUpload} className="hidden" />
+      </div>
+    </div>
+  )
+}
+
+function ActionLog({ game, showLog, toggleLog }) {
+  const fullLog = useGameStore((s) => s.fullLog)
+  const enterReplay = useGameStore((s) => s.enterReplay)
+  const exitReplay = useGameStore((s) => s.exitReplay)
+  const replayTo = useGameStore((s) => s.replayTo)
+
+  const inReplay = fullLog !== null
+  const totalActions = inReplay ? fullLog.length : game.actionLog.length
+  const currentIdx = game.actionLog.length - 1
+
+  return (
+    <div className="bg-broker-surface rounded-lg p-3">
+      <div className="flex items-center justify-between mb-2">
         <button
           onClick={toggleLog}
-          className="text-xs text-broker-text-muted font-medium uppercase mb-2 w-full text-left"
+          className="text-xs text-broker-text-muted font-medium uppercase"
         >
-          Log ({game.actionLog.length} actions) {showLog ? '▼' : '▶'}
+          Log ({game.actionLog.length}{inReplay ? `/${totalActions}` : ''} actions) {showLog ? '▼' : '▶'}
         </button>
-        {showLog && (
-          <div className="space-y-1 max-h-64 overflow-y-auto">
-            {[...game.actionLog].reverse().map((entry) => (
-              <div key={entry.id} className="text-xs text-broker-text-muted py-0.5 border-t border-broker-border">
-                {entry.description}
-              </div>
-            ))}
-          </div>
+        {!inReplay && game.actionLog.length > 0 && (
+          <button
+            onClick={enterReplay}
+            className="text-xs bg-blue-900/60 hover:bg-blue-800 text-blue-200 px-2 py-1 rounded"
+          >
+            Replay
+          </button>
+        )}
+        {inReplay && (
+          <button
+            onClick={exitReplay}
+            className="text-xs bg-amber-800 hover:bg-amber-700 text-white px-2 py-1 rounded"
+          >
+            Exit Replay
+          </button>
         )}
       </div>
+
+      {/* Replay controls */}
+      {inReplay && (
+        <div className="mb-3 space-y-2">
+          <input
+            type="range"
+            min={-1}
+            max={totalActions - 1}
+            value={currentIdx}
+            onChange={(e) => {
+              const idx = parseInt(e.target.value, 10)
+              if (idx < 0) replayTo(-1)
+              else replayTo(idx)
+            }}
+            className="w-full accent-blue-500"
+          />
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => replayTo(Math.max(-1, currentIdx - 1))}
+              disabled={currentIdx < 0}
+              className="text-xs px-2 py-1 rounded bg-broker-surface-hover hover:bg-broker-surface disabled:opacity-30 text-white"
+            >
+              ◀ Prev
+            </button>
+            <span className="text-xs text-broker-text-muted">
+              {currentIdx < 0 ? 'Start' : `Action ${currentIdx + 1} of ${totalActions}`}
+            </span>
+            <button
+              onClick={() => replayTo(Math.min(totalActions - 1, currentIdx + 1))}
+              disabled={currentIdx >= totalActions - 1}
+              className="text-xs px-2 py-1 rounded bg-broker-surface-hover hover:bg-broker-surface disabled:opacity-30 text-white"
+            >
+              Next ▶
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showLog && (
+        <div className="space-y-1 max-h-64 overflow-y-auto">
+          {[...game.actionLog].reverse().map((entry, i) => {
+            const idx = game.actionLog.length - 1 - i
+            return (
+              <div
+                key={entry.id}
+                onClick={() => inReplay && replayTo(idx)}
+                className={`text-xs py-0.5 border-t border-broker-border ${
+                  inReplay ? 'cursor-pointer hover:text-white' : ''
+                } ${inReplay && idx === currentIdx ? 'text-blue-300 font-medium' : 'text-broker-text-muted'}`}
+              >
+                <span className="text-broker-text-muted opacity-50 mr-1">{idx + 1}.</span>
+                {entry.description}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

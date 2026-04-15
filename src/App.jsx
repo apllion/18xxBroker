@@ -7,6 +7,9 @@ import GameShell from './components/layout/GameShell.jsx'
 export default function App() {
   const game = useGameStore((s) => s.game)
 
+  console.log('[App] game:', game ? `loaded (${game.title?.title})` : 'null')
+  console.log('[App] pathname:', window.location.pathname)
+
   if (!game) {
     return (
       <Routes>

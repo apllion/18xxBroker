@@ -11,7 +11,7 @@ export function saveGame(game) {
       titleId: game.title.titleId,
       title: { titleId: game.title.titleId, title: game.title.title, activeVariant: game.title.activeVariant },
       userVariant: game.title.activeVariant?.id || null,
-      playerNames: game.players.map((p) => p.name),
+      playerNames: game.originalPlayerNames || game.players.map((p) => p.name),
       players: game.players.map((p) => ({ name: p.name })),
       actionLog: game.actionLog,
       createdAt: game.createdAt,
@@ -56,7 +56,7 @@ export function deleteGame(key) {
 export function exportGame(game) {
   return JSON.stringify({
     titleId: game.title.titleId,
-    playerNames: game.players.map((p) => p.name),
+    playerNames: game.originalPlayerNames || game.players.map((p) => p.name),
     actionLog: game.actionLog,
     createdAt: game.createdAt,
   }, null, 2)

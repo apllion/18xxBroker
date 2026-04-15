@@ -6,7 +6,7 @@ export const g18india = {
   location: 'India', minPlayers: 2, maxPlayers: 5,
   bankCash: 9000, startingCash: { 2: 1100, 3: 733, 4: 550, 5: 440 },
   certLimit: { 2: 37, 3: 23, 4: 18, 5: 15 },
-  currencyFormat: '₹', capitalization: 'incremental', floatPercent: 30, sellBuyOrder: 'sell_buy',
+  currencyFormat: '₹', capitalization: 'incremental', floatPercent: 30, sellBuyOrder: 'sell_buy', nextSRPlayerOrder: 'first_to_pass',
   market: [
     ['0c','56','58','61','64p','67p','71p','76p','82p','90p','100p','112p','126','142','160','180','205','230','255','280','300','320','340','360','380','400e','420e','440e','460e'],
   ],
