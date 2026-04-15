@@ -73,7 +73,8 @@ export const g1846 = {
   ],
 
   pregame: [{ id: 'draft', label: 'Secret Draft', type: 'draft' }],
-  draftStyle: 'secret', // 1846: secret pick from visible pool, reveal at end
+  draftStyle: 'secret',       // secret pick from visible pool, reveal at end
+  draftPassCards: 'per_player', // add 1 pass card per player (0 in 2p)
 
   variants: {
     '2p': {

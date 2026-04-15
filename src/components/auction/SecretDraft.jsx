@@ -8,12 +8,32 @@ import { useState, useMemo } from 'react'
 // - At the end: all picks revealed, players pay
 // - If only 1 company left: can pass to reduce price by $10
 
+function isPassCard(sym) {
+  return sym.startsWith('PASS_')
+}
+
 export default function SecretDraft({ game, players, dispatch, fmt }) {
   const allCompanies = game.companies
 
+  // Generate pass cards based on title config
+  const passCards = useMemo(() => {
+    if (game.title.draftPassCards !== 'per_player') return []
+    if (players.length <= 2) return [] // no pass cards in 2p
+    return Array.from({ length: players.length }, (_, i) => ({
+      sym: `PASS_${i + 1}`,
+      name: `Pass (${i + 1})`,
+      value: 0,
+      revenue: 0,
+      desc: "Choose this if you don't want to purchase any of the offered companies this turn.",
+      isPass: true,
+    }))
+  }, [game.title.draftPassCards, players.length])
+
+  const allCards = useMemo(() => [...allCompanies, ...passCards], [allCompanies, passCards])
+
   // Shuffle on first render
   const [deck, setDeck] = useState(() => {
-    const shuffled = [...allCompanies].sort(() => Math.random() - 0.5)
+    const shuffled = [...allCards].sort(() => Math.random() - 0.5)
     return shuffled.map((c) => c.sym)
   })
 
@@ -79,12 +99,16 @@ export default function SecretDraft({ game, players, dispatch, fmt }) {
   }
 
   function handleReveal() {
-    // Reveal all picks and process payments
     setRevealed(true)
     const entries = []
     for (const [playerId, syms] of Object.entries(picks)) {
       for (const sym of syms) {
-        const company = allCompanies.find((c) => c.sym === sym)
+        if (isPassCard(sym)) {
+          const player = players.find((p) => p.id === playerId)
+          entries.push(`${player?.name} chose Pass`)
+          continue
+        }
+        const company = allCards.find((c) => c.sym === sym)
         const discount = lastDiscount[sym] || 0
         const price = Math.max(0, company.value - discount)
         dispatch({ type: 'BUY_PRIVATE', playerId, companySym: sym, price })
@@ -96,7 +120,7 @@ export default function SecretDraft({ game, players, dispatch, fmt }) {
   }
 
   function getCompany(sym) {
-    return allCompanies.find((c) => c.sym === sym)
+    return allCards.find((c) => c.sym === sym)
   }
 
   // --- Render ---
@@ -114,6 +138,9 @@ export default function SecretDraft({ game, players, dispatch, fmt }) {
               <div className="font-medium text-sm mb-1">{p.name}</div>
               {syms.length === 0 && <div className="text-xs text-broker-text-muted">No picks</div>}
               {syms.map((sym) => {
+                if (isPassCard(sym)) {
+                  return <div key={sym} className="text-xs text-broker-text-muted opacity-50">Pass</div>
+                }
                 const c = getCompany(sym)
                 const discount = lastDiscount[sym] || 0
                 const price = Math.max(0, c.value - discount)
@@ -181,9 +208,30 @@ export default function SecretDraft({ game, players, dispatch, fmt }) {
         </div>
         {draw.map((sym) => {
           const c = getCompany(sym)
+          const pass = isPassCard(sym)
           const discount = lastDiscount[sym] || 0
-          const price = Math.max(0, c.value - discount)
-          const canAfford = currentPlayer && currentPlayer.cash >= price
+          const price = pass ? 0 : Math.max(0, c.value - discount)
+          const canAfford = pass || (currentPlayer && currentPlayer.cash >= price)
+
+          if (pass) {
+            return (
+              <div key={sym} className="bg-broker-surface/50 border border-dashed border-broker-border rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-broker-text-muted">{c.name}</div>
+                    <div className="text-xs text-broker-text-muted">{c.desc}</div>
+                  </div>
+                  <button
+                    onClick={() => handlePick(sym)}
+                    className="flex-shrink-0 px-4 py-2 rounded-lg font-medium text-sm bg-broker-surface-hover hover:bg-broker-surface text-broker-text-muted hover:text-white transition-colors"
+                  >
+                    Pass
+                  </button>
+                </div>
+              </div>
+            )
+          }
+
           return (
             <div key={sym} className="bg-broker-surface rounded-lg p-3">
               <div className="flex items-start justify-between gap-2">
