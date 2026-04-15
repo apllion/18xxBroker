@@ -131,8 +131,8 @@ export function applyAction(state, action) {
       break
     case 'SET_TURN_QUEUE':
       state.turnQueue = action.queue || []
-      state.turnIndex = 0
-      state.srPassed = []
+      state.turnIndex = action.turnIndex ?? 0
+      state.srPassed = action.srPassed ?? []
       break
     case 'NEXT_TURN': {
       if (state.turnQueue.length === 0) break

@@ -182,7 +182,12 @@ export function useSync(gameStore) {
       })
       // Apply turn state after load
       if (sharedState.turnQueue) {
-        rawDispatch({ type: 'SET_TURN_QUEUE', queue: sharedState.turnQueue })
+        rawDispatch({
+          type: 'SET_TURN_QUEUE',
+          queue: sharedState.turnQueue,
+          turnIndex: sharedState.turnIndex ?? 0,
+          srPassed: sharedState.srPassed ?? [],
+        })
       }
     })
 
