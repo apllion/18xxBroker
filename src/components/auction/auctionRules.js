@@ -45,6 +45,17 @@ export const auctionRules = {
       'Some titles allow passing instead of drafting.',
     ],
   },
+  secret_draft: {
+    title: 'Secret Draft',
+    summary: 'Companies shuffled face-down. A limited pool is revealed. Picks are secret until all are done.',
+    steps: [
+      'Companies are shuffled. Only player count + 2 are face-up at a time.',
+      'Each player secretly picks one from the visible pool. Other players look away.',
+      'Unchosen visible cards are shuffled back into the deck.',
+      'When all picks are made, choices are revealed and players pay.',
+      'If only one company remains, players may pass to reduce its price by $10.',
+    ],
+  },
   priority: {
     title: 'Permit Selection',
     summary: 'Players take turns selecting permits/companies in player order.',

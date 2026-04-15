@@ -10,6 +10,7 @@ import WaterfallAuction from './WaterfallAuction.jsx'
 import EnglishAuction from './EnglishAuction.jsx'
 import BidboxAuction from './BidboxAuction.jsx'
 import DraftAuction from './DraftAuction.jsx'
+import SecretDraft from './SecretDraft.jsx'
 import ResultsEntry from './ResultsEntry.jsx'
 
 export default function AuctionGuide() {
@@ -23,7 +24,8 @@ export default function AuctionGuide() {
   const fmt = useCallback((n) => formatCurrency(n, game.title.currencyFormat), [game.title.currencyFormat])
   const step = currentPregameStep(game.roundTracker)
   const auctionType = step?.type || 'waterfall'
-  const rules = getRules(auctionType)
+  const rulesKey = auctionType === 'draft' && game.title.draftStyle === 'secret' ? 'secret_draft' : auctionType
+  const rules = getRules(rulesKey)
 
   const companies = game.companies
   const unsoldCompanies = companies.filter((c) => !c.ownerId)
@@ -63,6 +65,10 @@ export default function AuctionGuide() {
       case 'bidbox':
         return <BidboxAuction game={game} players={orderedPlayers} dispatch={dispatch} fmt={fmt} />
       case 'draft':
+        if (game.title.draftStyle === 'secret') {
+          return <SecretDraft game={game} players={orderedPlayers} dispatch={dispatch} fmt={fmt} />
+        }
+        return <DraftAuction game={game} players={orderedPlayers} dispatch={dispatch} fmt={fmt} auctionType={auctionType} />
       case 'purchase':
       case 'priority':
         return <DraftAuction game={game} players={orderedPlayers} dispatch={dispatch} fmt={fmt} auctionType={auctionType} />

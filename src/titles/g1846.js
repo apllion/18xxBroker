@@ -72,7 +72,8 @@ export const g1846 = {
     { sym: 'BIG4', name: 'Big 4', tokens: [0], color: '#00ffff', textColor: '#000', coordinates: 'G9', type: 'minor', floatPercent: 100 },
   ],
 
-  pregame: [{ id: 'draft', label: 'Draft', type: 'draft' }],
+  pregame: [{ id: 'draft', label: 'Secret Draft', type: 'draft' }],
+  draftStyle: 'secret', // 1846: secret pick from visible pool, reveal at end
 
   variants: {
     '2p': {
