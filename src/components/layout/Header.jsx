@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useGameStore } from '../../store/gameStore.js'
 import { useUIStore } from '../../store/uiStore.js'
 import { useDispatch } from '../../hooks/useDispatch.js'
@@ -15,15 +15,9 @@ export default function Header() {
   const canUndo = useGameStore((s) => s.canUndo)
   const toggleLog = useUIStore((s) => s.toggleLog)
 
-  // Turn tracking — turnQueue/turnIndex/srPassed are in gameStore (synced)
+  // Turn tracking
   const turnTracking = useUIStore((s) => s.turnTracking)
   const toggleTurnTracking = useUIStore((s) => s.toggleTurnTracking)
-  const turnQueue = game?.turnQueue || []
-  const turnIndex = game?.turnIndex || 0
-  const srPassed = game?.srPassed || []
-
-  function nextTurn() { dispatch({ type: 'NEXT_TURN' }) }
-  function prevTurn() { dispatch({ type: 'PREV_TURN' }) }
 
   // Confirm-to-advance state
   const [confirmPending, setConfirmPending] = useState(false)
@@ -117,33 +111,6 @@ export default function Header() {
     }
   }, [])
 
-  // Resolve turn tracking display
-  const turnDisplay = useMemo(() => {
-    if (turnTracking !== 'on' || turnQueue.length === 0) return null
-    const current = turnQueue[turnIndex]
-    const tracker = game.roundTracker
-    if (tracker?.type === 'stock') {
-      const player = game.players.find((p) => p.id === current)
-      const prioPlayer = game.players.find((p) => p.id === game.priorityDeal)
-      return {
-        label: `${player?.name || current}'s turn`,
-        detail: prioPlayer ? `PD: ${prioPlayer.name}` : null,
-        type: 'stock',
-      }
-    } else if (tracker?.type === 'operating') {
-      const corp = game.corporations.find((c) => c.sym === current)
-      const pres = corp ? game.players.find((p) =>
-        p.shares.some((s) => s.corpSym === current && s.isPresident)
-      ) : null
-      return {
-        label: `${current} operates`,
-        detail: pres ? `President: ${pres.name}` : null,
-        type: 'operating',
-      }
-    }
-    return null
-  }, [turnTracking, turnQueue, turnIndex, game])
-
   return (
     <>
       <header className="sticky top-0 z-10 bg-broker-surface border-b border-broker-border px-3 py-2">
@@ -219,26 +186,6 @@ export default function Header() {
         </div>
       )}
 
-      {/* Turn tracking banner */}
-      {turnDisplay && !showUndoBanner && (
-        <TurnBanner
-          turnDisplay={turnDisplay}
-          turnIndex={turnIndex}
-          turnQueue={turnQueue}
-          srPassed={srPassed}
-          game={game}
-          prevTurn={prevTurn}
-          nextTurn={nextTurn}
-        />
-      )}
-
-      {/* Round guidance */}
-      {guidance && !inPregame && !showUndoBanner && !turnDisplay && (
-        <div className="bg-broker-surface/50 border-b border-broker-border px-3 py-1.5">
-          <span className="text-xs text-broker-text-muted">{guidance}</span>
-        </div>
-      )}
-
       {/* Pending game events */}
       {game.pendingEvents?.length > 0 && (
         <EventBanner events={game.pendingEvents} dispatch={dispatch} />
@@ -272,94 +219,6 @@ function EventBanner({ events, dispatch }) {
           </div>
         )
       })}
-    </div>
-  )
-}
-
-function TurnBanner({ turnDisplay, turnIndex, turnQueue, srPassed, game, prevTurn, nextTurn }) {
-  const dispatch = useDispatch()
-  const isSR = turnDisplay.type === 'stock'
-  const current = turnQueue[turnIndex]
-
-  function handleSrPass() {
-    if (srPassed.length === 0) {
-      dispatch({ type: 'SET_PRIORITY', playerId: current })
-    }
-    dispatch({ type: 'SR_PASS', playerId: current })
-  }
-
-  function handleSrActed() {
-    dispatch({ type: 'SR_ACTED' })
-  }
-
-  return (
-    <div className={`border-b border-broker-border px-3 py-2 ${
-      isSR ? 'bg-broker-green/20' : 'bg-amber-900/20'
-    }`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-white">{turnDisplay.label}</span>
-          {turnDisplay.detail && (
-            <span className="text-xs text-broker-text-muted">{turnDisplay.detail}</span>
-          )}
-        </div>
-        <div className="flex gap-1">
-          {isSR && (
-            <>
-              <button
-                onClick={handleSrPass}
-                className="text-xs px-2 py-1 rounded bg-broker-surface hover:bg-red-900/40 text-broker-text-muted hover:text-red-300"
-              >
-                Pass
-              </button>
-              <button
-                onClick={handleSrActed}
-                className="text-xs px-2 py-1 rounded bg-broker-surface hover:bg-broker-surface-hover text-white"
-              >
-                Acted
-              </button>
-            </>
-          )}
-          {!isSR && (
-            <>
-              <button
-                onClick={prevTurn}
-                disabled={turnIndex === 0}
-                className="text-xs px-2 py-1 rounded bg-broker-surface hover:bg-broker-surface-hover disabled:opacity-30 text-white"
-              >
-                Prev
-              </button>
-              <button
-                onClick={nextTurn}
-                disabled={turnIndex >= turnQueue.length - 1}
-                className="text-xs px-2 py-1 rounded bg-broker-surface hover:bg-broker-surface-hover disabled:opacity-30 text-white"
-              >
-                Next
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* SR: show who passed */}
-      {isSR && srPassed.length > 0 && (
-        <div className="flex gap-1 mt-1.5">
-          {turnQueue.map((id) => {
-            const p = game.players.find((pl) => pl.id === id)
-            const passed = srPassed.includes(id)
-            const isCurrent = id === current
-            return (
-              <div key={id} className={`text-xs px-2 py-0.5 rounded-full ${
-                isCurrent ? 'bg-blue-700 text-white font-medium'
-                  : passed ? 'bg-broker-surface/30 text-broker-text-muted opacity-40 line-through'
-                    : 'bg-broker-surface text-broker-text-muted'
-              }`}>
-                {p?.name}
-              </div>
-            )
-          })}
-        </div>
-      )}
     </div>
   )
 }

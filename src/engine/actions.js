@@ -14,7 +14,7 @@ import { advanceRound, setRound, setFixedIndex, roundLabel } from './roundTracke
 let actionSeq = 0
 
 // Actions that mutate state but shouldn't be logged (turn navigation)
-const SILENT_ACTIONS = new Set(['NEXT_TURN', 'PREV_TURN', 'SR_PASS', 'SR_ACTED', 'SET_TURN_QUEUE'])
+const SILENT_ACTIONS = new Set(['NEXT_TURN', 'PREV_TURN', 'SR_PASS', 'SR_ACTED', 'SET_TURN_QUEUE', 'SET_OR_STEP', 'OR_NEXT_CORP'])
 
 export function applyAction(state, action) {
   const silent = SILENT_ACTIONS.has(action.type)
@@ -165,6 +165,14 @@ export function applyAction(state, action) {
     case 'SR_ACTED':
       state.srPassed = []
       state.turnIndex = (state.turnIndex + 1) % (state.turnQueue.length || 1)
+      break
+    case 'SET_OR_STEP':
+      state.orStep = action.step ?? 0
+      break
+    case 'OR_NEXT_CORP':
+      // Advance to next corp and reset OR step
+      state.turnIndex = Math.min((state.turnIndex + 1), (state.turnQueue.length || 1) - 1)
+      state.orStep = 0
       break
     case 'REORDER_BY_CASH': {
       const dir = action.direction || 'desc' // 'desc' = most cash first, 'asc' = least first

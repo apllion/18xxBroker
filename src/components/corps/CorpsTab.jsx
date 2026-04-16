@@ -126,18 +126,8 @@ export default function CorpsTab() {
   )
 }
 
-const OR_STEPS = [
-  { id: 'track', label: 'Lay Track' },
-  { id: 'token', label: 'Place Token' },
-  { id: 'routes', label: 'Run Routes' },
-  { id: 'dividend', label: 'Dividends' },
-  { id: 'train', label: 'Buy Trains' },
-]
-
 function CorpDetail({ game, corp, dispatch, fmt, onNext }) {
   const [revenue, setRevenue] = useState('')
-  const [orStep, setOrStep] = useState(0)
-  const turnTracking = useUIStore((s) => s.turnTracking)
 
   const price = corpPrice(game.stockMarket, corp.sym)
   const limit = trainLimit(game.phaseManager)
@@ -206,32 +196,6 @@ function CorpDetail({ game, corp, dispatch, fmt, onNext }) {
         </div>
       </div>
 
-      {/* OR step tracker (guided mode) */}
-      {turnTracking === 'on' && (
-        <div className="flex gap-1 overflow-x-auto pb-1">
-          {OR_STEPS.map((step, i) => (
-            <button
-              key={step.id}
-              onClick={() => setOrStep(i)}
-              className={`flex-shrink-0 text-xs px-2.5 py-1 rounded-full transition-colors ${
-                i === orStep
-                  ? 'bg-amber-700 text-white font-medium'
-                  : i < orStep
-                    ? 'bg-broker-surface/50 text-broker-text-muted opacity-50'
-                    : 'bg-broker-surface text-broker-text-muted'
-              }`}
-            >
-              {step.label}
-            </button>
-          ))}
-          <button
-            onClick={() => { setOrStep(0); onNext() }}
-            className="flex-shrink-0 text-xs px-2.5 py-1 rounded-full bg-broker-green/50 text-broker-gold font-medium"
-          >
-            Done →
-          </button>
-        </div>
-      )}
 
       {/* Trains */}
       <div className="bg-broker-surface rounded-lg p-3">

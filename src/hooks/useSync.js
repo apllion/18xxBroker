@@ -33,6 +33,7 @@ function getSharedState(game) {
     turnQueue: game.turnQueue,
     turnIndex: game.turnIndex,
     srPassed: game.srPassed,
+    orStep: game.orStep,
     priorityDeal: game.priorityDeal,
   }
 }

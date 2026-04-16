@@ -69,6 +69,7 @@ export function createGame(baseTitle, playerNames, userVariant = null) {
     turnQueue: [],
     turnIndex: 0,
     srPassed: [],
+    orStep: 0,  // 0=track, 1=token, 2=routes, 3=dividend, 4=trains
     pendingEvents: [],
     actionLog: [],
     createdAt: Date.now(),
